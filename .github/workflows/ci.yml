@@ -36,7 +36,10 @@ jobs:
       - name: Install the SDK this repository depends on
         run: |
           python -m pip install --upgrade pip
-          pip install pmcp @ git+https://github.com/physicalcontextprotocol/pmcp-python.git@main
+          # The whole requirement is quoted. Unquoted, the shell splits
+          # it on whitespace and pip receives a bare "@" as its second
+          # argument -- "Invalid requirement: '@': Expected package name".
+          pip install "pmcp @ git+https://github.com/physicalcontextprotocol/pmcp-python.git@main"
 
       - name: Confirm the documented PYTHONPATH recipe works
         run: |

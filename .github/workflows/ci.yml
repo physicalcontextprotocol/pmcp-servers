@@ -33,19 +33,36 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Install the SDK this repository depends on
+      - name: Check out the SDK this repository depends on
+        # The README documents running these servers from a local
+        # checkout of both repositories:
+        #
+        #   pip install -e pmcp-python
+        #   export PYTHONPATH="$PWD/pmcp-python:$PWD/pmcp-servers"
+        #
+        # so that is what this job tests. An earlier version installed
+        # pmcp from its git URL instead, which cannot work while
+        # pmcp-python is private -- the clone fails with "could not read
+        # Username for 'https://github.com'" -- and which also tested a
+        # recipe the README does not document. Fetching the sibling
+        # repository, pinned to its main branch, is the closest
+        # equivalent that CI can actually perform.
+        uses: actions/checkout@v4
+        with:
+          repository: physicalcontextprotocol/pmcp-python
+          path: pmcp-python
+          ref: main
+
+      - name: Install the SDK, as the README documents
         run: |
           python -m pip install --upgrade pip
-          # The whole requirement is quoted. Unquoted, the shell splits
-          # it on whitespace and pip receives a bare "@" as its second
-          # argument -- "Invalid requirement: '@': Expected package name".
-          pip install "pmcp @ git+https://github.com/physicalcontextprotocol/pmcp-python.git@main"
+          pip install -e pmcp-python
+          pip show pmcp | grep -q "Name: pmcp" \
+            || { echo "::error::could not install pmcp-python"; exit 1; }
 
       - name: Confirm the documented PYTHONPATH recipe works
         run: |
-          pip show pmcp | grep -q "Name: pmcp" \
-            || { echo "::error::could not install pmcp-python"; exit 1; }
-          export PYTHONPATH="$GITHUB_WORKSPACE:$PYTHONPATH"
+          export PYTHONPATH="$GITHUB_WORKSPACE/pmcp-python:$GITHUB_WORKSPACE:$PYTHONPATH"
           python -c "import v05; print('v05 importable, so the README recipe holds')"
 
       - name: Confirm the reference servers parse

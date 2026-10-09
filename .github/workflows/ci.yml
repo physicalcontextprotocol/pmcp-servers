@@ -57,7 +57,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e pmcp-python
-          pip show pmcp | grep -q "Name: pmcp" \
+          # The distribution name changed: the SDK was renamed from `pcp`
+          # to `physicalcontextprotocol` (the PyPI `pcp` name was already
+          # taken), while the import packages stay `pcp` and `v05`. The old
+          # `pip show pmcp` check was looking for a name this project has
+          # never published under since the rename, so it failed on a
+          # successful install.
+          pip show physicalcontextprotocol | grep -q "Name: physicalcontextprotocol" \
             || { echo "::error::could not install pmcp-python"; exit 1; }
 
       - name: Confirm the documented PYTHONPATH recipe works
